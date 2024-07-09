@@ -23,7 +23,8 @@
 #define INCLUDE_ALLOW_MODULE
 #include "includeCheck.h"
 #include "driver-config.h"
-
+// header for RCU
+#include <linux/rcupdate.h>
 
 #ifdef skb_shinfo
 #  define SKB_IS_CLONE_OF(clone, skb)   (  \
@@ -41,13 +42,11 @@
     compat_skb_set_network_header(skb, sizeof (struct ethhdr)),  \
     dev_queue_xmit(skb)                                   \
   )
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
-#   define dev_lock_list()    rcu_read_lock()
-#   define dev_unlock_list()  rcu_read_unlock()
-#else
-#   define dev_lock_list()    read_lock(&dev_base_lock)
-#   define dev_unlock_list()  read_unlock(&dev_base_lock)
-#endif
+// old code
+// #define dev_lock_list()    read_lock(&dev_base_lock)
+// #define dev_unlock_list()  read_unlock(&dev_base_lock)
+#define dev_lock_list()    rcu_read_lock()
+#define dev_unlock_list()  rcu_read_unlock()
 
 
 extern struct proto vmnet_proto;
