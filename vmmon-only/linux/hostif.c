@@ -3411,7 +3411,7 @@ HostIF_SafeRDMSR(unsigned int msr,   // IN
    int err;
    u64 v;
 
-   err = rdmsrl_safe(msr, &v);
+   err = rdmsrq_safe(msr, &v);
    *val = (err == 0) ? v : 0;  // Linux corrupts 'v' on error
 
    return err;
