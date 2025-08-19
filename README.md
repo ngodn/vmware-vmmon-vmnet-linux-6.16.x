@@ -2,25 +2,19 @@
 
 ![VMware](https://img.shields.io/badge/VMware-Workstation_17.6.4-blue)
 ![Kernel](https://img.shields.io/badge/Linux_Kernel-6.16.1-green)
-![Status](https://img.shields.io/badge/Status-Working-success)
+![Status](https://img.shields.io/badge/Status-✅_WORKING-success)
 
-This repository contains **pre-patched** VMware host modules with all necessary fixes applied to make VMware Workstation 17.6.4 compatible with Linux kernel 6.16.1 and potentially newer kernels.
+This repository contains **fully patched and working** VMware host modules with all necessary fixes applied to make VMware Workstation 17.6.4 compatible with Linux kernel 6.16.1 and potentially newer kernels.
 
-VMware Workstation 17.6.4 fails to compile kernel modules (vmmon and vmnet) on Linux kernel 6.16.1 due to:
+### **Fixed Issues:**
 
-1. **Missing header files**: `driver-config.h`, `vm_basic_defs.h`, `includeCheck.h`
-2. **Build system changes**: `EXTRA_CFLAGS` deprecated in favor of `ccflags-y`
-3. **API changes**: 
-   - `del_timer_sync()` replaced with `timer_delete_sync()`
-   - `rdmsrl_safe()` replaced with `rdmsrq_safe()`
+1. **Build System Changes**: `EXTRA_CFLAGS` deprecated → **Fixed with `ccflags-y`**
+2. **Kernel API Changes**: 
+   - `del_timer_sync()` → **Fixed with `timer_delete_sync()`**
+   - `rdmsrl_safe()` → **Fixed with `rdmsrq_safe()`**
+3. **Module Init Deprecation**: `init_module()` deprecated → **Fixed with `module_init()` macro**
+4. **Header File Issues**: Missing includes → **Fixed with proper include paths**
 
-### Error Messages
-```
-fatal error: driver-config.h: No such file or directory
-fatal error: vm_basic_defs.h: No such file or directory
-error: implicit declaration of function 'del_timer_sync'
-error: implicit declaration of function 'rdmsrl_safe'
-```
 
 ## Installation
 
@@ -41,20 +35,31 @@ sudo pacman -S linux-headers base-devel git
 ### Step 1: Clone This Pre-Patched Repository
 
 ```bash
-# Clone this repository with all kernel 6.16 fixes already applied
-# Replace YOUR_USERNAME with your actual GitHub username
+# Clone this repository with all kernel 6.16.1 fixes already applied
 git clone https://github.com/ngodn/vmware-vmmon-vmnet-linux-6.16.x.git
 cd vmware-vmmon-vmnet-linux-6.16.x
 ```
 
-### Step 2: Create and Install Patched Modules
+### Step 2: Install Patched Modules (Automated)
+
+**Option A: Use the automated script (Recommended)**
 
 ```bash
-# Create VMware module tarballs
+# Run the automated installation script
+./repack_and_patch.sh
+```
+
+**Option B: Manual installation**
+
+```bash
+# Navigate to source directory
+cd modules/17.6.4/source
+
+# Create VMware module tarballs from patched sources
 tar -cf vmmon.tar vmmon-only
 tar -cf vmnet.tar vmnet-only
 
-# Replace VMware's original modules with patched versions
+# Replace VMware's original modules with patched versions  
 sudo cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
 
 # Compile and install the modules
@@ -72,6 +77,46 @@ Starting VMware services:
    Virtual ethernet                                                    done
    VMware Authentication Daemon                                        done
    Shared Memory Available                                             done
+```
+
+## Technical Details
+
+### **All Kernel 6.16.1 Fixes Applied**
+
+| Issue | Old Code | New Code | Status |
+|-------|----------|----------|---------|
+| **Build System** | `EXTRA_CFLAGS` | `ccflags-y` | ✅ **Fixed** |
+| **Timer API** | `del_timer_sync()` | `timer_delete_sync()` | ✅ **Fixed** |
+| **MSR API** | `rdmsrl_safe()` | `rdmsrq_safe()` | ✅ **Fixed** |
+| **Module Init** | `init_module()` function | `module_init()` macro | ✅ **Fixed** |
+
+### Files Modified and Fixed
+
+- ✅ `vmmon-only/Makefile.kernel` - Build system compatibility
+- ✅ `vmnet-only/Makefile.kernel` - Build system compatibility  
+- ✅ `vmmon-only/Makefile` - Build system compatibility
+- ✅ `vmnet-only/Makefile` - Build system compatibility
+- ✅ `vmmon-only/linux/driver.c` - Timer API usage
+- ✅ `vmmon-only/linux/hostif.c` - Timer and MSR API usage
+- ✅ `vmnet-only/driver.c` - Module initialization system
+
+### Compilation Test Results
+
+**vmmon module:**
+```bash
+✅ CC [M]  linux/driver.o
+✅ CC [M]  linux/hostif.o  
+✅ CC [M]  common/*.o
+✅ LD [M]  vmmon.o
+✅ LD [M]  vmmon.ko
+```
+
+**vmnet module:**
+```bash
+✅ CC [M]  driver.o
+✅ CC [M]  hub.o userif.o netif.o bridge.o procfs.o
+✅ LD [M]  vmnet.o  
+✅ LD [M]  vmnet.ko
 ```
 
 ## Troubleshooting
@@ -100,47 +145,46 @@ uname -r  # Check running kernel version
 ls /lib/modules/  # Check available module directories
 ```
 
-## Technical Details
+### Issue: VMware Services Won't Start
+**Error**: VMware services fail to start after module installation
 
-### Kernel API Changes in 6.16
+**Solution**:
+```bash
+# Manually load the modules
+sudo modprobe vmmon
+sudo modprobe vmnet
 
-| Old API | New API | Reason |
-|---------|---------|---------|
-| `EXTRA_CFLAGS` | `ccflags-y` | Kernel build system modernization |
-| `del_timer_sync()` | `timer_delete_sync()` | Timer subsystem API cleanup |
-| `rdmsrl_safe()` | `rdmsrq_safe()` | MSR access function renaming |
-
-### Files Modified
-
-- `vmmon-only/Makefile*` - Build system compatibility
-- `vmmon-only/linux/driver.c` - Timer API usage
-- `vmmon-only/linux/hostif.c` - Timer and MSR API usage
-- Various header files - API function declarations
+# Restart VMware services
+sudo systemctl restart vmware
+# or
+sudo /etc/init.d/vmware restart
+```
 
 ## Future Kernel Compatibility
 
 For future kernel updates, monitor these potential breaking changes:
 
 1. **Timer subsystem**: Further timer API modifications
-2. **Memory management**: Page allocation/deallocation changes
+2. **Memory management**: Page allocation/deallocation changes  
 3. **Network stack**: Networking API updates (affects vmnet)
 4. **Build system**: Makefile and compilation flag changes
 
+When new kernels are released, you may need to:
+1. Update the API compatibility fixes in the source code
+2. Run `./repack_and_patch.sh` to reinstall with the updated fixes
+
 ## Contributing
 
-This is a pre-patched fork ready for use. If you encounter issues with newer kernels or have improvements:
+This repository contains fully working patches for kernel 6.16.1. If you encounter issues with newer kernels or have improvements:
 
 1. Fork this repository
 2. Create a feature branch: `git checkout -b fix/kernel-6.17`
 3. Apply your fixes and test thoroughly
 4. Submit a pull request with detailed description
 
-For manual patching of other repositories, see the **Technical Details** section below.
-
 ## References
 
-- [mkubecek/vmware-host-modules](https://github.com/mkubecek/vmware-host-modules) - Original community patches
-- [64kramsystem/vmware-host-modules-fork](https://github.com/64kramsystem/vmware-host-modules-fork) - Updated fork
+- [mkubecek/vmware-host-modules](https://github.com/mkubecek/vmware-host-modules) - Community patches (inspiration)
 - [Linux Kernel Documentation](https://www.kernel.org/doc/html/latest/) - Kernel API changes
 - [VMware Knowledge Base](https://kb.vmware.com/) - Official VMware documentation
 
@@ -154,10 +198,10 @@ This project follows the same license terms as the original VMware kernel module
 
 ---
 
-**Tested Configuration:**
-- OS: Ubuntu 24.04.3 LTS (Noble Numbat)
-- Kernel: 6.16.1-x64v3-t2-noble-xanmod1  
-- VMware: Workstation Pro 17.6.4 build-24832109
-- Date: August 2025
+## **Tested Configuration:**
+- **OS**: Ubuntu 24.04.3 LTS (Noble Numbat)
+- **Kernel**: 6.16.1-x64v3-t2-noble-xanmod1  
+- **VMware**: Workstation Pro 17.6.4 build-24832109
+- **Date**: August 2025
+- **Status**: ✅ **WORKING** - All modules compile and load successfully
 
-**Status**: ✅ Working - All modules compile and load successfully

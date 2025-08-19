@@ -1,49 +1,37 @@
-MODULES = vmmon vmnet
-SUBDIRS = $(MODULES:%=%-only)
-TARBALLS = $(MODULES:%=%.tar)
-MODFILES = $(foreach mod,$(MODULES),$(mod)-only/$(mod).ko)
-VM_UNAME = $(shell uname -r)
-MODDIR = /lib/modules/$(VM_UNAME)/misc
+# VMware Workstation 17.6.4 - Linux Kernel 6.16.1 Compatibility
+# Simple Makefile for easy installation
 
-MODINFO = /sbin/modinfo
-DEPMOD = /sbin/depmod
+.PHONY: all tarballs install clean help
 
-%.tar: FORCE gitcleancheck
-	git archive -o $@ --format=tar HEAD $(@:.tar=-only)
+all: install
 
-.PHONY: FORCE subdirs $(SUBDIRS) clean tarballs
+help:
+	@echo "VMware Workstation 17.6.4 - Linux Kernel 6.16.1 Compatibility"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  install    - Create tarballs and install VMware modules (default)"
+	@echo "  tarballs   - Create vmmon.tar and vmnet.tar from patched sources"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  help       - Show this help message"
+	@echo ""
+	@echo "Quick start:"
+	@echo "  make install"
 
-subdirs: retiredcheck $(SUBDIRS)
+tarballs:
+	@echo "Creating tarballs from patched sources..."
+	cd modules/17.6.4/source && \
+	tar -cf vmmon.tar vmmon-only && \
+	tar -cf vmnet.tar vmnet-only
+	@echo "✅ Created vmmon.tar and vmnet.tar"
 
-FORCE:
+install: tarballs
+	@echo "Installing patched VMware modules..."
+	./repack_and_patch.sh
 
-$(SUBDIRS):
-	$(MAKE) -C $@ $(MAKECMDGOALS)
-
-gitcheck:
-	@git status >/dev/null 2>&1 \
-	     || ( echo "This only works in a git repository."; exit 1 )
-
-gitcleancheck: gitcheck
-	@git diff --exit-code HEAD >/dev/null 2>&1 \
-	     || echo "Warning: tarballs will reflect current HEAD (no uncommited changes)"
-
-retiredcheck:
-	@test -f RETIRED && cat RETIRED || true
-
-install: retiredcheck $(MODFILES)
-	@for f in $(MODFILES); do \
-	    mver=$$($(MODINFO) -F vermagic $$f);\
-	    mver=$${mver%% *};\
-	    test "$${mver}" = "$(VM_UNAME)" \
-	        || ( echo "Version mismatch: module $$f $${mver}, kernel $(VM_UNAME)" ; exit 1 );\
-	done
-	install -D -t $(DESTDIR)$(MODDIR) $(MODFILES)
-	strip --strip-debug $(MODULES:%=$(DESTDIR)$(MODDIR)/%.ko)
-	if test -z "$(DESTDIR)"; then $(DEPMOD) -a $(VM_UNAME); fi
-
-clean: $(SUBDIRS)
-	rm -f *.o
-
-tarballs: $(TARBALLS)
-
+clean:
+	@echo "Cleaning build artifacts..."
+	cd modules/17.6.4/source && \
+	rm -f vmmon.tar vmnet.tar && \
+	make clean -C vmmon-only 2>/dev/null || true && \
+	make clean -C vmnet-only 2>/dev/null || true
+	@echo "✅ Cleaned"
