@@ -213,10 +213,13 @@ print_status "📝 Applying C code compatibility fixes..."
 VMNET_DRIVER_C="modules/17.6.4/source/vmnet-only/driver.c"
 SMAC_COMPAT_C="modules/17.6.4/source/vmnet-only/smac_compat.c"
 
-# Check and fix VNetFreeInterfaceList() if needed
-if grep -q "VNetFreeInterfaceList()" "$VMNET_DRIVER_C"; then
+# Check and fix VNetFreeInterfaceList() if needed (only declaration and definition, not calls)
+if grep -q "^VNetFreeInterfaceList()$" "$VMNET_DRIVER_C"; then
     print_status "Fixing VNetFreeInterfaceList() prototype in driver.c..."
-    sed -i 's/VNetFreeInterfaceList()/VNetFreeInterfaceList(void)/g' "$VMNET_DRIVER_C"
+    # Fix only the function definition (line that starts with the function name)
+    sed -i '/^VNetFreeInterfaceList()$/s/VNetFreeInterfaceList()/VNetFreeInterfaceList(void)/' "$VMNET_DRIVER_C"
+    # Fix only the static declaration
+    sed -i 's/static void VNetFreeInterfaceList();/static void VNetFreeInterfaceList(void);/' "$VMNET_DRIVER_C"
     print_success "Fixed function prototype in driver.c"
 fi
 
