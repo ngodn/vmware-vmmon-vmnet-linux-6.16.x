@@ -1,10 +1,10 @@
-# VMware Workstation 17.6.4 - Linux Kernel 6.16.1 Compatibility Fixes
+# VMware Workstation 17.6.4 - Linux Kernel 6.16.x Compatibility Fixes
 
 ![VMware](https://img.shields.io/badge/VMware-Workstation_17.6.4-blue)
-![Kernel](https://img.shields.io/badge/Linux_Kernel-6.16.1-green)
+![Kernel](https://img.shields.io/badge/Linux_Kernel-6.16.x-green)
 ![Status](https://img.shields.io/badge/Status-✅_WORKING-success)
 
-This repository contains **fully patched and working** VMware host modules with all necessary fixes applied to make VMware Workstation 17.6.4 compatible with Linux kernel 6.16.1 and potentially newer kernels.
+This repository contains **fully patched and working** VMware host modules with all necessary fixes applied to make VMware Workstation 17.6.4 compatible with Linux kernel 6.16.x and potentially newer kernels.
 
 ### **Fixed Issues:**
 
@@ -35,7 +35,7 @@ sudo pacman -S linux-headers base-devel git
 ### Step 1: Clone This Pre-Patched Repository
 
 ```bash
-# Clone this repository with all kernel 6.16.1 fixes already applied
+# Clone this repository with all kernel 6.16.x fixes already applied
 git clone https://github.com/ngodn/vmware-vmmon-vmnet-linux-6.16.x.git
 cd vmware-vmmon-vmnet-linux-6.16.x
 ```
@@ -81,7 +81,7 @@ Starting VMware services:
 
 ## Technical Details
 
-### **All Kernel 6.16.1 Fixes Applied**
+### **All Kernel 6.16.x Fixes Applied**
 
 | Issue | Old Code | New Code | Status |
 |-------|----------|----------|---------|
@@ -175,7 +175,7 @@ When new kernels are released, you may need to:
 
 ## Contributing
 
-This repository contains fully working patches for kernel 6.16.1. If you encounter issues with newer kernels or have improvements:
+This repository contains fully working patches for kernel 6.16.x. If you encounter issues with newer kernels or have improvements:
 
 1. Fork this repository
 2. Create a feature branch: `git checkout -b fix/kernel-6.17`
@@ -200,7 +200,7 @@ This project follows the same license terms as the original VMware kernel module
 
 ## **Tested Configuration:**
 - **OS**: Ubuntu 24.04.3 LTS (Noble Numbat)
-- **Kernel**: 6.16.1-x64v3-t2-noble-xanmod1  
+- **Kernel**: 6.16.x-x64v3-t2-noble-xanmod1  
 - **VMware**: Workstation Pro 17.6.4 build-24832109
 - **Date**: August 2025
 - **Status**: ✅ **WORKING** - All modules compile and load successfully
