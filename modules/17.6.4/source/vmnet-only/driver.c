@@ -1397,7 +1397,7 @@ VNetCycleDetectIf(const char *name, // IN:
  */
 
 void
-VNetFreeInterfaceList()
+VNetFreeInterfaceList(void)
 {
    while (vnetInterfaces != NULL) {
       VNetInterface *next = vnetInterfaces->next;
