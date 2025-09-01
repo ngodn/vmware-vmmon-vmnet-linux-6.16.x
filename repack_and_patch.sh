@@ -69,8 +69,10 @@ if [ ! -d "/usr/lib/vmware" ]; then
     exit 1
 fi
 
+
 print_status "✅ All pre-patched modules found"
 print_status "✅ VMware Workstation installation detected"
+
 echo
 
 # Detect kernel compiler
@@ -357,6 +359,15 @@ sudo rmmod vmnet vmmon 2>/dev/null || true
 if sudo modprobe vmmon && sudo modprobe vmnet; then
     print_success "✅ Modules loaded successfully!"
     
+    # Restart VMware services
+    print_status "Restarting VMware services..."
+    if sudo systemctl restart vmware.service vmware-USBArbitrator.service 2>/dev/null; then
+        print_success "VMware services restarted successfully"
+    else
+        print_warning "Failed to restart VMware services or services not found"
+        print_status "You may need to restart VMware manually"
+    fi
+    
     # Verify modules are running
     if lsmod | grep -q vmmon && lsmod | grep -q vmnet; then
         print_success "✅ All VMware modules are running!"
@@ -373,9 +384,14 @@ if sudo modprobe vmmon && sudo modprobe vmnet; then
         echo
         echo "🎉 Installation Complete!"
         echo "✅ Kernel compiler detected: $KERNEL_COMPILER"
-        echo "✅ Applied compatibility fixes for kernel 6.16.x"
+        echo "✅ Applied all kernel 6.16.x+ compatibility fixes:"
+        echo "   • Build system: EXTRA_CFLAGS → ccflags-y"
+        echo "   • Timer API: del_timer_sync → timer_delete_sync"
+        echo "   • MSR API: rdmsrl_safe → rdmsrq_safe"  
+        echo "   • Module init: init_module() → module_init() macro"
+        echo "   • Compiler: Auto-detected and used $KERNEL_COMPILER toolchain"
         echo "✅ Modules compiled and loaded successfully"
-        echo "✅ VMware Workstation is ready to use"
+        echo "✅ VMware services restarted"
         echo
         echo "You can now launch VMware Workstation."
         
@@ -385,6 +401,12 @@ if sudo modprobe vmmon && sudo modprobe vmnet; then
     fi
 else
     print_error "Failed to load modules"
+    echo
+    echo "Troubleshooting steps:"
+    echo "1. Ensure kernel headers are installed: sudo apt install linux-headers-\$(uname -r)"
+    echo "2. Check if Secure Boot is disabled"
+    echo "3. For Clang kernels, ensure matching Clang version is installed"
+    echo "4. Check dmesg for kernel module errors: dmesg | tail -20"
     exit 1
 fi
 

@@ -32,6 +32,8 @@ sudo dnf install kernel-devel kernel-headers gcc make git
 
 # Arch Linux
 sudo pacman -S linux-headers base-devel git
+# For CachyOS or Clang-built kernels, also ensure clang and lld are installed:
+sudo pacman -S clang lld
 ```
 
 ### Step 1: Clone This Pre-Patched Repository
@@ -48,6 +50,7 @@ cd vmware-vmmon-vmnet-linux-6.16.x
 
 ```bash
 # Run the installation script (auto-detects kernel compiler: GCC/Clang)
+# This script now auto-detects GCC vs Clang kernel builds and uses appropriate toolchain
 ./repack_and_patch.sh
 ```
 
@@ -204,10 +207,25 @@ ls /lib/modules/  # Check available module directories
 sudo modprobe vmmon
 sudo modprobe vmnet
 
-# Restart VMware services
-sudo systemctl restart vmware
-# or
+# Restart VMware services (the script now does this automatically)
+sudo systemctl restart vmware.service vmware-USBArbitrator.service
+# or for older systems
 sudo /etc/init.d/vmware restart
+```
+
+### Issue: Compiler Mismatch (Clang vs GCC)
+**Error**: `error: unrecognized command-line option '-mretpoline-external-thunk'` or similar Clang-specific flags
+
+**Solution**: The script now auto-detects kernel compiler:
+- **Clang-built kernels**: Automatically uses `CC=clang LD=ld.lld`
+- **GCC-built kernels**: Uses standard `CC=gcc LD=ld`
+
+For manual builds on Clang kernels:
+```bash
+cd modules/17.6.4/source/vmmon-only
+make CC=clang LD=ld.lld -j$(nproc)
+cd ../vmnet-only  
+make CC=clang LD=ld.lld -j$(nproc)
 ```
 
 ## Future Kernel Compatibility
@@ -252,13 +270,20 @@ This project follows the same license terms as the original VMware kernel module
 
 ## **Tested Configurations:**
 
-| OS | Kernel | Compiler | VMware | Status |
-|----|---------|---------|---------| -------|
-| Ubuntu 24.04.3 LTS | 6.16.2-x64v3-xanmod1 | Clang 19.1.7 | 17.6.4 | ✅ **WORKING** |
-| Ubuntu 24.04.3 LTS | 6.16.x-generic | GCC 14.2.0 | 17.6.4 | ✅ **WORKING** |
-| Debian/Ubuntu | 6.16.x-generic | GCC | 17.6.4 | ✅ **WORKING** |
-| Various Distros | 6.16.x-xanmod | Clang | 17.6.4 | ✅ **WORKING** |
+### Configuration 1 (Original)
+- **OS**: Ubuntu 24.04.3 LTS (Noble Numbat)
+- **Kernel**: 6.16.1-x64v3-t2-noble-xanmod1  
+- **Compiler**: GCC
+- **VMware**: Workstation Pro 17.6.4 build-24832109
+- **Date**: August 2025
+- **Status**: ✅ **WORKING** - All modules compile and load successfully
 
-**Last Updated**: August 2025  
-**Universal Compatibility**: ✅ **All major 6.16.x kernel variants supported**
+### Configuration 2 (Clang/LLVM)
+- **OS**: Custom Built OS (Arch Linux based)
+- **Kernel**: 6.16.4-1-cachyos
+- **Compiler**: Clang 20.1.8 with LLD 20.1.8 linker
+- **VMware**: Workstation Pro 17.6.4 build-24832109
+- **Date**: September 2025
+- **Status**: ✅ **WORKING** - Auto-detected Clang toolchain, modules compile and load successfully
+- **Notes**: Required manual build with `CC=clang LD=ld.lld` due to VMware's GCC detection failing on Clang-built kernels. The updated script now handles this automatically.
 
