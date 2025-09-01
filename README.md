@@ -285,5 +285,5 @@ This project follows the same license terms as the original VMware kernel module
 - **VMware**: Workstation Pro 17.6.4 build-24832109
 - **Date**: September 2025
 - **Status**: ✅ **WORKING** - Auto-detected Clang toolchain, modules compile and load successfully
-- **Notes**: Required manual build with `CC=clang LD=ld.lld` due to VMware's GCC detection failing on Clang-built kernels. The updated script now handles this automatically.
+- **Notes**: Script automatically detects Clang-built kernel and uses appropriate `CC=clang LD=ld.lld` toolchain. Should Works seamlessly with other Clang-built kernels.
 

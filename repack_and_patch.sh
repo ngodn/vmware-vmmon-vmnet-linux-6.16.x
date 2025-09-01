@@ -163,25 +163,34 @@ if [ "$KERNEL_COMPILER" = "clang" ]; then
     
     # Check for available Clang versions
     AVAILABLE_CLANG=""
-    for version in 19 18 17 16 15; do
-        if command -v "clang-$version" >/dev/null 2>&1; then
-            AVAILABLE_CLANG="clang-$version"
-            CLANG_VERSION="$version"
-            break
-        fi
-    done
+    
+    # First check for generic 'clang' command
+    if command -v "clang" >/dev/null 2>&1; then
+        AVAILABLE_CLANG="clang"
+        CLANG_VERSION=$(clang --version | grep -o "clang version [0-9]*" | grep -o "[0-9]*" | head -1)
+        print_success "Found generic Clang: clang (version $CLANG_VERSION)"
+    else
+        # Check for versioned Clang binaries
+        for version in 20 19 18 17 16 15; do
+            if command -v "clang-$version" >/dev/null 2>&1; then
+                AVAILABLE_CLANG="clang-$version"
+                CLANG_VERSION="$version"
+                break
+            fi
+        done
+    fi
     
     if [ -n "$AVAILABLE_CLANG" ]; then
         USE_CLANG=true
         print_success "Found compatible Clang: $AVAILABLE_CLANG"
         
         # Check if we need LLD linker
-        if command -v "ld.lld-$CLANG_VERSION" >/dev/null 2>&1; then
-            NEED_LLD=true
-            print_status "LLVM linker available: ld.lld-$CLANG_VERSION"
-        elif command -v "ld.lld" >/dev/null 2>&1; then
+        if command -v "ld.lld" >/dev/null 2>&1; then
             NEED_LLD=true
             print_status "LLVM linker available: ld.lld"
+        elif [ -n "$CLANG_VERSION" ] && command -v "ld.lld-$CLANG_VERSION" >/dev/null 2>&1; then
+            NEED_LLD=true
+            print_status "LLVM linker available: ld.lld-$CLANG_VERSION"
         fi
     else
         print_warning "No compatible Clang found, will try to install..."
@@ -252,10 +261,10 @@ if [ "$USE_CLANG" = true ]; then
     # Set up Clang environment
     export CC="$AVAILABLE_CLANG"
     if [ "$NEED_LLD" = true ]; then
-        if command -v "ld.lld-$CLANG_VERSION" >/dev/null 2>&1; then
-            export LD="ld.lld-$CLANG_VERSION"
-        else
+        if command -v "ld.lld" >/dev/null 2>&1; then
             export LD="ld.lld"
+        elif [ -n "$CLANG_VERSION" ] && command -v "ld.lld-$CLANG_VERSION" >/dev/null 2>&1; then
+            export LD="ld.lld-$CLANG_VERSION"
         fi
         print_status "Using LLVM linker: $LD"
     fi
