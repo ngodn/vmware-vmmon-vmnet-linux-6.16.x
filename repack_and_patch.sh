@@ -285,6 +285,13 @@ if [ "$USE_CLANG" = true ]; then
         print_status "Compiling vmnet with Clang..."
         if make CC="$CC" ${LD:+LD="$LD"} -j$(nproc) >/dev/null 2>&1; then
             print_success "vmnet compiled successfully with Clang"
+            
+            # Install modules
+            print_status "Installing modules..."
+            sudo mkdir -p /lib/modules/$(uname -r)/misc/
+            sudo cp ../vmmon-only/vmmon.ko /lib/modules/$(uname -r)/misc/
+            sudo cp vmnet.ko /lib/modules/$(uname -r)/misc/
+            sudo depmod -a
         else
             print_error "vmnet compilation failed with Clang"
             COMPILE_SUCCESS=false
