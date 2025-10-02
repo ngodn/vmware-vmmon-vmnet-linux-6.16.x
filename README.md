@@ -280,7 +280,7 @@ This project follows the same license terms as the original VMware kernel module
 
 ### Configuration 2 (Clang/LLVM)
 - **OS**: Custom Built OS (Arch Linux based)
-- **Kernel**: 6.16.4-1-cachyos
+- **Kernel**: 6.16.9-1-cachyos-lto
 - **Compiler**: Clang 20.1.8 with LLD 20.1.8 linker
 - **VMware**: Workstation Pro 17.6.4 build-24832109
 - **Date**: September 2025
