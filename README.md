@@ -283,7 +283,7 @@ This project follows the same license terms as the original VMware kernel module
 - **Kernel**: 6.16.9-1-cachyos-lto
 - **Compiler**: Clang 20.1.8 with LLD 20.1.8 linker
 - **VMware**: Workstation Pro 17.6.4 build-24832109
-- **Date**: September 2025
+- **Date**: October 2025
 - **Status**: ✅ **WORKING** - Auto-detected Clang toolchain, modules compile and load successfully
 - **Notes**: Script automatically detects Clang-built kernel and uses appropriate `CC=clang LD=ld.lld` toolchain. Should Works seamlessly with other Clang-built kernels.
 
